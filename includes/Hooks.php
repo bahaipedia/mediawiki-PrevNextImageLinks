@@ -50,12 +50,15 @@ class Hooks {
 		$number = intval( $matches[1] ); // E.g. 123
 		$extension = $matches[2]; // E.g. "png".
 
+		$services = MediaWikiServices::getInstance();
 		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
+		$repo = $services->getRepoGroup();
+
 		$links = [];
 
 		// "Previous file" link. Not shown if the previous file doesn't exist.
 		$prevTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number - 1 ) . '.' . $extension );
-		if ( $prevTitle->exists() ) {
+		if ( $repo->findFile( $prevTitle ) ) {
 			$links[] = $linkRenderer->makeKnownLink( $prevTitle,
 				wfMessage( 'prevnextimage-previous-file' )->plain()
 			);
@@ -68,7 +71,7 @@ class Hooks {
 
 		// "Next file" link. Not shown if the next file doesn't exist.
 		$nextTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number + 1 ) . '.' . $extension );
-		if ( $nextTitle->exists() ) {
+		if ( $repo->findFile( $nextTitle ) ) {
 			$links[] = $linkRenderer->makeKnownLink( $nextTitle,
 				wfMessage( 'prevnextimage-next-file' )->plain()
 			);
