@@ -44,9 +44,7 @@ class Hooks {
 			return true;
 		}
 
-		$numberAndExtension = $matches[0]; // E.g. "123.png".
 		$baseFilename = substr( $filename, 0, -1 * strlen( $matches[0] ) ); // E.g. "Something ".
-
 		$number = intval( $matches[1] ); // E.g. 123
 		$extension = $matches[2]; // E.g. "png".
 
