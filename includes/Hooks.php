@@ -52,27 +52,28 @@ class Hooks {
 		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
 		$repo = $services->getRepoGroup();
 
-		$links = [];
-
 		// "Previous file" link. Not shown if the previous file doesn't exist.
 		$prevTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number - 1 ) . '.' . $extension );
 		if ( $repo->findFile( $prevTitle ) ) {
-			$links[] = $linkRenderer->makeKnownLink( $prevTitle,
+			$link = $linkRenderer->makeKnownLink( $prevTitle,
 				wfMessage( 'prevnextimage-previous-file' )->plain()
 			);
+			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-prev' ], $link );
 		}
 
 		// Between Prev/Next link: direct link to Download the currently viewed file.
-		$links[] = $filename . ' (' . Html::element( 'a', [
+		$downloadLink = $filename . ' (' . Html::element( 'a', [
 			'href' => $page->getFile()->getFullURL()
 		], wfMessage( 'prevnextimage-download' )->plain() ) . ')';
+		$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-download' ], $downloadLink );
 
 		// "Next file" link. Not shown if the next file doesn't exist.
 		$nextTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number + 1 ) . '.' . $extension );
 		if ( $repo->findFile( $nextTitle ) ) {
-			$links[] = $linkRenderer->makeKnownLink( $nextTitle,
+			$link = $linkRenderer->makeKnownLink( $nextTitle,
 				wfMessage( 'prevnextimage-next-file' )->plain()
 			);
+			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-next' ], $link );
 		}
 
 		foreach ( $links as $html ) {
