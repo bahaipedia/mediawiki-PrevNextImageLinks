@@ -35,50 +35,61 @@ class Hooks {
 	 * @return bool
 	 */
 	public static function onImagePageShowTOC( ImagePage $page, array &$toc ) {
-		$filename = $page->getTitle()->getText(); // E.g. "Something 123.png"
-
-		// Try to find a number before extension, e.g. "123" in "Something 123.png".
-		$matches = null;
-		if ( !preg_match( '/([0-9]+)\.([^.]+$)/', $filename, $matches ) ) {
-			// Not found.
-			return true;
-		}
-
-		$baseFilename = substr( $filename, 0, -1 * strlen( $matches[0] ) ); // E.g. "Something ".
-		$number = intval( $matches[1] ); // E.g. 123
-		$extension = $matches[2]; // E.g. "png".
+		list( $prevTitle, $nextTitle ) = self::getPrevNextTitles( $page->getTitle() );
 
 		$services = MediaWikiServices::getInstance();
 		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
 		$repo = $services->getRepoGroup();
 
 		// "Previous file" link. Not shown if the previous file doesn't exist.
-		$prevTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number - 1 ) . '.' . $extension );
-		if ( $repo->findFile( $prevTitle ) ) {
-			$link = $linkRenderer->makeKnownLink( $prevTitle,
+		if ( $prevTitle && $repo->findFile( $prevTitle ) ) {
+			$prevLink = $linkRenderer->makeKnownLink( $prevTitle,
 				wfMessage( 'prevnextimage-previous-file' )->plain()
 			);
-			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-prev' ], $link );
+			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-prev' ], $prevLink );
 		}
 
 		// Between Prev/Next link: direct link to Download the currently viewed file.
-		$downloadLink = $filename . ' (' . Html::element( 'a', [
+		$downloadLink = $page->getTitle()->getText() . ' (' . Html::element( 'a', [
 			'href' => $page->getFile()->getFullURL()
 		], wfMessage( 'prevnextimage-download' )->plain() ) . ')';
 		$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-download' ], $downloadLink );
 
 		// "Next file" link. Not shown if the next file doesn't exist.
-		$nextTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number + 1 ) . '.' . $extension );
-		if ( $repo->findFile( $nextTitle ) ) {
-			$link = $linkRenderer->makeKnownLink( $nextTitle,
+		if ( $nextTitle && $repo->findFile( $nextTitle ) ) {
+			$nextLink = $linkRenderer->makeKnownLink( $nextTitle,
 				wfMessage( 'prevnextimage-next-file' )->plain()
 			);
-			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-next' ], $link );
+			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-next' ], $nextLink );
 		}
 
-		foreach ( $links as $html ) {
-			$toc[] = Html::rawElement( 'li', [], $html );
-		}
 		return true;
+	}
+
+	/**
+	 * Return an array of prev/next titles (if filename ends with a number) or nulls (if it doesn't).
+	 * Doesn't check for existence of these files.
+	 * @param Title $title Name of the currently viewed file.
+	 * @return array
+	 * @phan-return array{0:Title|null,1:Title|null}
+	 */
+	protected static function getPrevNextTitles( Title $title ) {
+		$filename = $title->getText(); // E.g. "Something 123.png"
+
+		// Try to find a number before extension, e.g. "123" in "Something 123.png".
+		$matches = null;
+		if ( !preg_match( '/([0-9]+)\.([^.]+$)/', $filename, $matches ) ) {
+			// Not found.
+			return [ null, null ];
+		}
+
+		$baseFilename = substr( $filename, 0, -1 * strlen( $matches[0] ) ); // E.g. "Something ".
+		$number = intval( $matches[1] ); // E.g. 123
+		$extension = $matches[2]; // E.g. "png".
+
+		$prevTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number - 1 ) . '.' . $extension );
+		$nextTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number + 1 ) . '.' . $extension );
+
+		return [ $prevTitle, $nextTitle ];
 	}
 }
