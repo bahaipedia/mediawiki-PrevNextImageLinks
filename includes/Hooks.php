@@ -34,8 +34,11 @@ class Hooks {
 	 * @return bool
 	 */
 	public static function onImagePageShowTOC( ImagePage $page, array &$toc ) {
-		$finder = new PageFinder;
-		list( $prevTitle, $nextTitle ) = $finder->getPrevNext( $page->getTitle() );
+		$title = $page->getTitle();
+
+		$finder = new PageFinder( $title );
+		list( $prevTitle, $nextTitle ) = $finder->findPrevNext();
+		$associatedArticleTitle = $finder->findAssociatedArticle();
 
 		$services = MediaWikiServices::getInstance();
 		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
@@ -49,11 +52,21 @@ class Hooks {
 			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-prev' ], $prevLink );
 		}
 
-		// Between Prev/Next link: direct link to Download the currently viewed file.
-		$downloadLink = $page->getTitle()->getText() . ' (' . Html::element( 'a', [
-			'href' => $page->getFile()->getFullURL()
-		], wfMessage( 'prevnextimage-download' )->plain() ) . ')';
-		$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-download' ], $downloadLink );
+		// Between Prev/Next link: if there is an existing article associated with this image
+		// (which typically contains the text from this image/PDF in wikitext form),
+		// then we display "Return to text" link to it.
+		// If such article doesn't exist, then we show direct link to Download the currently viewed file.
+		if ( $associatedArticleTitle->exists() ) {
+			$returnLink = $linkRenderer->makeKnownLink( $associatedArticleTitle,
+				wfMessage( 'prevnextimage-return-to-text' )->plain()
+			);
+			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-return-to-view' ], $returnLink );
+		} else {
+			$downloadLink = $page->getTitle()->getText() . ' (' . Html::element( 'a', [
+				'href' => $page->getFile()->getFullURL()
+			], wfMessage( 'prevnextimage-download' )->plain() ) . ')';
+			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-download' ], $downloadLink );
+		}
 
 		// "Next file" link. Not shown if the next file doesn't exist.
 		if ( $nextTitle && $repo->findFile( $nextTitle ) ) {

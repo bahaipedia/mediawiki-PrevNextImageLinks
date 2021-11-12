@@ -2,6 +2,7 @@
 	"@metadata": {},
 	"prevnextimage-desc": "Shows \"Previous image\" and \"Next image\" links for file pages like \"File:Something_123.png\" (Prev points to Something_122.png and Next points to Something_124.png).",
 	"prevnextimage-download": "Download file",
+	"prevnextimage-next-file": "Next file",
 	"prevnextimage-previous-file": "Previous file",
-	"prevnextimage-next-file": "Next file"
+	"prevnextimage-return-to-text": "Return to text view"
 }
