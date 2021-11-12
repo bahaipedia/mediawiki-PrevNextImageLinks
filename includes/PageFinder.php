@@ -68,7 +68,7 @@ class PageFinder {
 	 * @return Title
 	 */
 	public function findAssociatedArticle() {
-		$varSeries = $varVolume = $varIssue = null;
+		$varSeries = $varVolume = $varIssue = $varMonth = $varYear = null;
 
 		$filename = $this->title->getText();
 
@@ -90,7 +90,19 @@ class PageFinder {
 			$filename = preg_replace( $regex, '', $filename );
 		}
 
-		// TODO: find strings like Something_January_1800, treat this as "Something/1800/January/Text".
+		$regex =
+			'/January|February|March|April|May|June|July|August|September|October|November|December/';
+		if ( preg_match( $regex, $filename, $matches ) ) {
+			$varMonth = $matches[0];
+			$filename = preg_replace( $regex, '', $filename );
+		}
+
+		// Find variable "Year", if any (four digits, 1000-2999).
+		$regex = '/[12][0-9][0-9][0-9]/';
+		if ( preg_match( $regex, $filename, $matches ) ) {
+			$varYear = $matches[0];
+			$filename = preg_replace( $regex, '', $filename );
+		}
 
 		// Trim $filename and remove any duplicate spaces (caused by removal of Issue, etc.).
 		$filename = trim( preg_replace( '/ {2}/', ' ', $filename ) );
@@ -102,8 +114,16 @@ class PageFinder {
 			$filename = preg_replace( $regex, '', $filename );
 		}
 
-		// Everything that remained in $filename is a potential article name.
+		// Everything left in $filename is a potential article name. We add variables to it, for example:
+		// "Something/1800/January/Text",
+		// "Something/Series6/Volume 2/Issue 3/Text".
 		$potentialPageName = $filename;
+		if ( $varYear ) {
+			$potentialPageName .= '/' . $varYear;
+		}
+		if ( $varMonth ) {
+			$potentialPageName .= '/' . $varMonth;
+		}
 		if ( $varSeries ) {
 			// No space between "Series" and number.
 			$potentialPageName .= '/Series' . $varSeries;
