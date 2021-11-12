@@ -68,8 +68,15 @@ class PageFinder {
 	 * @return Title
 	 */
 	public function findAssociatedArticle() {
-		$varSeries = $varVolume = $varIssue = $varMonth = $varYear = null;
+		// It's possible that some article has {{#set_associated_image:}},
+		// in which case we can easily detect it.
+		$title = AssociatedImage::findPageByImage( $this->title );
+		if ( $title ) {
+			return $title;
+		}
 
+		// Attempt to autodetect the article name by filename.
+		$varSeries = $varVolume = $varIssue = $varMonth = $varYear = null;
 		$filename = $this->title->getText();
 
 		// Remove extension, e.g. ".pdf" or ".png". No need to verify if it's a correct extension,

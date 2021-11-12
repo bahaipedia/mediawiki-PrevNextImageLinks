@@ -22,14 +22,16 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
+use MediaWiki\Linker\LinkTarget;
 use Parser;
+use Title;
 
 class AssociatedImage {
 	/**
 	 * Remember the parameter of {{#set_associated_image:}} in page_props table.
 	 * @param Parser $parser
 	 * @param string $parameter
-	 * @return array
+	 * @return string
 	 */
 	public static function pfSetAssociatedImage( Parser $parser, $parameter ) {
 		$parameter = trim( strtr( $parameter, ' ', '_' ) );
@@ -45,7 +47,7 @@ class AssociatedImage {
 	 * Remember the parameter of {{#set_associated_index:}} in page_props table.
 	 * @param Parser $parser
 	 * @param string $parameter
-	 * @return array
+	 * @return string
 	 */
 	public static function pfSetAssociatedIndex( Parser $parser, $parameter ) {
 		$parameter = intval( $parameter );
@@ -55,5 +57,24 @@ class AssociatedImage {
 
 		// Return the text received as a parameter (for convenient use in templates).
 		return $parameter;
+	}
+
+	/**
+	 * Find Title of the page that has {{#set_associated_image:}} pointed at $imageTitle.
+	 * @param LinkTarget $imageTitle
+	 * @return Title|null
+	 */
+	public static function findPageByImage( LinkTarget $imageTitle ) {
+		$dbr = wfGetDB( DB_REPLICA );
+		$articleId = $dbr->selectField( 'page_props', 'pp_page', [
+			'pp_propname' => 'associatedImage',
+			'pp_value' => $imageTitle->getDBKey()
+		], __METHOD__ );
+
+		if ( !$articleId ) {
+			return null;
+		}
+
+		return Title::newFromID( $articleId );
 	}
 }
