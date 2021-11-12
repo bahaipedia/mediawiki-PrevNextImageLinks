@@ -24,10 +24,27 @@ namespace MediaWiki\PrevNextImageLinks;
 
 use Html;
 use MediaWiki\Hook\ParserFirstCallInitHook;
-use MediaWiki\MediaWikiServices;
+use MediaWiki\Linker\LinkRenderer;
 use MediaWiki\Page\Hook\ImagePageShowTOCHook;
+use RepoGroup;
+use RequestContext;
 
 class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
+	/** @var LinkRenderer */
+	protected $linkRenderer;
+
+	/** @var RepoGroup */
+	protected $repoGroup;
+
+	/**
+	 * @param LinkRenderer $linkRenderer
+	 * @param RepoGroup $repoGroup
+	 */
+	public function __construct( LinkRenderer $linkRenderer, RepoGroup $repoGroup ) {
+		$this->linkRenderer = $linkRenderer;
+		$this->repoGroup = $repoGroup;
+	}
+
 	/**
 	 * ImagePageShowTOC hook. Adds Prev/Next links to File: pages if their title ends with a number.
 	 *
@@ -38,18 +55,14 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 
 		$finder = new PageFinder(
 			$title,
-			RequestContext::getMain()->getRequest->getIntOrNull( 'page' )
+			RequestContext::getMain()->getRequest()->getIntOrNull( 'page' )
 		);
 		list( $prevTitle, $nextTitle ) = $finder->findPrevNext();
 		$associatedArticleTitle = $finder->findAssociatedArticle();
 
-		$services = MediaWikiServices::getInstance();
-		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
-		$repo = $services->getRepoGroup();
-
 		// "Previous file" link. Not shown if the previous file doesn't exist.
-		if ( $prevTitle && $repo->findFile( $prevTitle ) ) {
-			$prevLink = $linkRenderer->makeKnownLink( $prevTitle,
+		if ( $prevTitle && $this->repoGroup->findFile( $prevTitle ) ) {
+			$prevLink = $this->linkRenderer->makeKnownLink( $prevTitle,
 				wfMessage( 'prevnextimage-previous-file' )->plain()
 			);
 			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-prev' ], $prevLink );
@@ -60,7 +73,7 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 		// then we display "Return to text" link to it.
 		// If such article doesn't exist, then we show direct link to Download the currently viewed file.
 		if ( $associatedArticleTitle->exists() ) {
-			$returnLink = $linkRenderer->makeKnownLink( $associatedArticleTitle,
+			$returnLink = $this->linkRenderer->makeKnownLink( $associatedArticleTitle,
 				wfMessage( 'prevnextimage-return-to-text' )->plain()
 			);
 			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-return-to-view' ], $returnLink );
@@ -72,8 +85,8 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 		}
 
 		// "Next file" link. Not shown if the next file doesn't exist.
-		if ( $nextTitle && $repo->findFile( $nextTitle ) ) {
-			$nextLink = $linkRenderer->makeKnownLink( $nextTitle,
+		if ( $nextTitle && $this->repoGroup->findFile( $nextTitle ) ) {
+			$nextLink = $this->linkRenderer->makeKnownLink( $nextTitle,
 				wfMessage( 'prevnextimage-next-file' )->plain()
 			);
 			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-next' ], $nextLink );

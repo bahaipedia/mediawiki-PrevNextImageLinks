@@ -50,9 +50,9 @@ class AssociatedImage {
 	 * @return string
 	 */
 	public static function pfSetAssociatedIndex( Parser $parser, $parameter ) {
-		$parameter = intval( $parameter );
-		if ( $parameter ) {
-			$parser->getOutput()->setProperty( 'associatedPageIndex', $parameter );
+		$index = intval( $parameter );
+		if ( $index ) {
+			$parser->getOutput()->setProperty( 'associatedPageIndex', $index );
 		}
 
 		// Return the text received as a parameter (for convenient use in templates).

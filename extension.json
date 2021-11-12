@@ -24,7 +24,11 @@
 	},
 	"HookHandlers": {
 		"main": {
-			"class": "MediaWiki\\PrevNextImageLinks\\Hooks"
+			"class": "MediaWiki\\PrevNextImageLinks\\Hooks",
+			"services": [
+				"LinkRenderer",
+				"RepoGroup"
+			]
 		}
 	},
 	"Hooks": {
