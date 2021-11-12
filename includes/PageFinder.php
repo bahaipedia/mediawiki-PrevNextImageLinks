@@ -29,10 +29,18 @@ class PageFinder {
 	protected $title;
 
 	/**
-	 * @param Title $title Name of the currently viewed file.
+	 * @var int|null
+	 * Number of PDF page (if applicable), null otherwise.
 	 */
-	public function __construct( Title $title ) {
+	protected $index;
+
+	/**
+	 * @param Title $title Name of the currently viewed file.
+	 * @param int|null $index
+	 */
+	public function __construct( Title $title, $index ) {
 		$this->title = $title;
+		$this->index = $index;
 	}
 
 	/**
@@ -70,7 +78,7 @@ class PageFinder {
 	public function findAssociatedArticle() {
 		// It's possible that some article has {{#set_associated_image:}},
 		// in which case we can easily detect it.
-		$title = AssociatedImage::findPageByImage( $this->title );
+		$title = AssociatedImage::findPageByImage( $this->title, $this->index );
 		if ( $title ) {
 			return $title;
 		}

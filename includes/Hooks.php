@@ -36,7 +36,10 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 	public function onImagePageShowTOC( $page, &$toc ) {
 		$title = $page->getTitle();
 
-		$finder = new PageFinder( $title );
+		$finder = new PageFinder(
+			$title,
+			RequestContext::getMain()->getRequest->getIntOrNull( 'page' )
+		);
 		list( $prevTitle, $nextTitle ) = $finder->findPrevNext();
 		$associatedArticleTitle = $finder->findAssociatedArticle();
 

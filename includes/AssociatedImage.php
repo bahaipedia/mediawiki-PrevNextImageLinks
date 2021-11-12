@@ -62,14 +62,17 @@ class AssociatedImage {
 	/**
 	 * Find Title of the page that has {{#set_associated_image:}} pointed at $imageTitle.
 	 * @param LinkTarget $imageTitle
+	 * @param int|null $index
 	 * @return Title|null
 	 */
-	public static function findPageByImage( LinkTarget $imageTitle ) {
+	public static function findPageByImage( LinkTarget $imageTitle, $index ) {
 		$dbr = wfGetDB( DB_REPLICA );
 		$articleId = $dbr->selectField( 'page_props', 'pp_page', [
 			'pp_propname' => 'associatedImage',
 			'pp_value' => $imageTitle->getDBKey()
 		], __METHOD__ );
+
+		// TODO: select only pages with valid $index
 
 		if ( !$articleId ) {
 			return null;
