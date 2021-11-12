@@ -2,7 +2,7 @@
 
 /*
 	Extension:PrevNextImageLinks - MediaWiki extension.
-	Copyright (C) 2020 Edward Chernenko.
+	Copyright (C) 2020-2021 Edward Chernenko.
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ namespace MediaWiki\PrevNextImageLinks;
 use Html;
 use ImagePage;
 use MediaWiki\MediaWikiServices;
-use Title;
 
 class Hooks {
 	/**
@@ -35,7 +34,8 @@ class Hooks {
 	 * @return bool
 	 */
 	public static function onImagePageShowTOC( ImagePage $page, array &$toc ) {
-		list( $prevTitle, $nextTitle ) = self::getPrevNextTitles( $page->getTitle() );
+		$finder = new PageFinder;
+		list( $prevTitle, $nextTitle ) = $finder->getPrevNext( $page->getTitle() );
 
 		$services = MediaWikiServices::getInstance();
 		$linkRenderer = MediaWikiServices::getInstance()->getLinkRenderer();
@@ -64,32 +64,5 @@ class Hooks {
 		}
 
 		return true;
-	}
-
-	/**
-	 * Return an array of prev/next titles (if filename ends with a number) or nulls (if it doesn't).
-	 * Doesn't check for existence of these files.
-	 * @param Title $title Name of the currently viewed file.
-	 * @return array
-	 * @phan-return array{0:Title|null,1:Title|null}
-	 */
-	protected static function getPrevNextTitles( Title $title ) {
-		$filename = $title->getText(); // E.g. "Something 123.png"
-
-		// Try to find a number before extension, e.g. "123" in "Something 123.png".
-		$matches = null;
-		if ( !preg_match( '/([0-9]+)\.([^.]+$)/', $filename, $matches ) ) {
-			// Not found.
-			return [ null, null ];
-		}
-
-		$baseFilename = substr( $filename, 0, -1 * strlen( $matches[0] ) ); // E.g. "Something ".
-		$number = intval( $matches[1] ); // E.g. 123
-		$extension = $matches[2]; // E.g. "png".
-
-		$prevTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number - 1 ) . '.' . $extension );
-		$nextTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number + 1 ) . '.' . $extension );
-
-		return [ $prevTitle, $nextTitle ];
 	}
 }

@@ -15,7 +15,8 @@
 		]
 	},
 	"AutoloadClasses": {
-		"MediaWiki\\PrevNextImageLinks\\Hooks": "includes/Hooks.php"
+		"MediaWiki\\PrevNextImageLinks\\Hooks": "includes/Hooks.php",
+		"MediaWiki\\PrevNextImageLinks\\PageFinder": "includes/PageFinder.php"
 	},
 	"Hooks": {
 		"ImagePageShowTOC": "MediaWiki\\PrevNextImageLinks\\Hooks::onImagePageShowTOC"
