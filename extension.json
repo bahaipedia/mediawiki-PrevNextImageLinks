@@ -15,11 +15,21 @@
 		]
 	},
 	"AutoloadClasses": {
+		"MediaWiki\\PrevNextImageLinks\\AssociatedImage": "includes/AssociatedImage.php",
 		"MediaWiki\\PrevNextImageLinks\\Hooks": "includes/Hooks.php",
 		"MediaWiki\\PrevNextImageLinks\\PageFinder": "includes/PageFinder.php"
 	},
+	"ExtensionMessagesFiles": {
+		"PrevNextImageLinksMagic": "PrevNextImageLinks.i18n.magic.php"
+	},
+	"HookHandlers": {
+		"main": {
+			"class": "MediaWiki\\PrevNextImageLinks\\Hooks"
+		}
+	},
 	"Hooks": {
-		"ImagePageShowTOC": "MediaWiki\\PrevNextImageLinks\\Hooks::onImagePageShowTOC"
+		"ImagePageShowTOC": "main",
+		"ParserFirstCallInit": "main"
 	},
 	"manifest_version": 2
 }

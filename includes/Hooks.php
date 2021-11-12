@@ -23,17 +23,17 @@
 namespace MediaWiki\PrevNextImageLinks;
 
 use Html;
-use ImagePage;
+use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\MediaWikiServices;
+use MediaWiki\Page\Hook\ImagePageShowTOCHook;
 
-class Hooks {
+class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 	/**
 	 * ImagePageShowTOC hook. Adds Prev/Next links to File: pages if their title ends with a number.
-	 * @param ImagePage $page
-	 * @param string[] &$toc
-	 * @return bool
+	 *
+	 * @inheritDoc
 	 */
-	public static function onImagePageShowTOC( ImagePage $page, array &$toc ) {
+	public function onImagePageShowTOC( $page, &$toc ) {
 		$title = $page->getTitle();
 
 		$finder = new PageFinder( $title );
@@ -75,7 +75,17 @@ class Hooks {
 			);
 			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-next' ], $nextLink );
 		}
+	}
 
-		return true;
+	/**
+	 * Register {{#set_associated_image:}} and {{#set_associated_index:}} syntax.
+	 *
+	 * @inheritDoc
+	 */
+	public function onParserFirstCallInit( $parser ) {
+		$parser->setFunctionHook( 'set_associated_image',
+			[ AssociatedImage::class, 'pfSetAssociatedImage' ] );
+		$parser->setFunctionHook( 'set_associated_index',
+			[ AssociatedImage::class, 'pfSetAssociatedIndex' ] );
 	}
 }
