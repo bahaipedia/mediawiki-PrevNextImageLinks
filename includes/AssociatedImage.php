@@ -93,11 +93,20 @@ class AssociatedImage {
 			]
 		);
 
-		$articleId = $row->page;
-		if ( !$articleId ) {
+		$logger = \MediaWiki\Logger\LoggerFactory::getInstance( 'ImageLinks' );
+		$logger->debug( 'findPageByImage(): looking for associatedImage="{image}" ' .
+			'with {associatedPageIndex}={index}: {isFound}',
+			[
+				'image' => $imageTitle->getDBKey(),
+				'index' => $index === null ? '(null)' : $index,
+				'isFound' => $row ? ( 'Found: pageID=' . $row->page ) : 'Not found'
+			]
+		);
+
+		if ( !$row ) {
 			return null;
 		}
 
-		return Title::newFromID( $articleId );
+		return Title::newFromID( $row->page );
 	}
 }

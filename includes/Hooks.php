@@ -60,6 +60,24 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 		list( $prevTitle, $nextTitle ) = $finder->findPrevNext();
 		$associatedArticleTitle = $finder->findAssociatedArticle();
 
+		$logger = \MediaWiki\Logger\LoggerFactory::getInstance( 'ImageLinks' );
+		if ( $associatedArticleTitle ) {
+			$logger->debug( 'onImagePageShowTOC(): image="{image}", ' .
+				'found associatedArticleTitle="{title}", exists={exists}',
+				[
+					'image' => $title->getText(),
+					'title' => $associatedArticleTitle->getFullText(),
+					'exists' => $associatedArticleTitle->exists() ? 'yes' : 'no'
+				]
+			);
+		} else {
+			$logger->debug( 'onImagePageShowTOC(): image="{image}", associatedArticleTitle not found',
+				[
+					'image' => $title->getText()
+				]
+			);
+		}
+
 		// "Previous file" link. Not shown if the previous file doesn't exist.
 		if ( $prevTitle && $this->repoGroup->findFile( $prevTitle ) ) {
 			$prevLink = $this->linkRenderer->makeKnownLink( $prevTitle,
@@ -77,6 +95,10 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 				wfMessage( 'prevnextimage-return-to-text' )->plain()
 			);
 			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-return-to-view' ], $returnLink );
+
+			$logger->debug( 'onImagePageShowTOC(): image="{image}": added "Return to text view" link', [
+				'image' => $title->getText()
+			] );
 		} else {
 			$downloadLink = $page->getTitle()->getText() . ' (' . Html::element( 'a', [
 				'href' => $page->getFile()->getFullURL()
