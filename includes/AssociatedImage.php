@@ -51,7 +51,7 @@ class AssociatedImage {
 	 */
 	public static function pfSetAssociatedIndex( Parser $parser, $parameter ) {
 		$index = intval( $parameter );
-		if ( $index ) {
+		if ( $index > 1 ) {
 			$parser->getOutput()->setProperty( 'associatedPageIndex', $index );
 		}
 
@@ -66,6 +66,11 @@ class AssociatedImage {
 	 * @return Title|null
 	 */
 	public static function findPageByImage( LinkTarget $imageTitle, $index ) {
+		if ( $index <= 1 ) {
+			// "File:Something.pdf?page=1" is the same thing as "File:Something.pdf".
+			$index = null;
+		}
+
 		$dbr = wfGetDB( DB_REPLICA );
 		$row = $dbr->selectRow(
 			[
