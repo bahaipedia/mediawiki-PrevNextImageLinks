@@ -67,13 +67,28 @@ class AssociatedImage {
 	 */
 	public static function findPageByImage( LinkTarget $imageTitle, $index ) {
 		$dbr = wfGetDB( DB_REPLICA );
-		$articleId = $dbr->selectField( 'page_props', 'pp_page', [
-			'pp_propname' => 'associatedImage',
-			'pp_value' => $imageTitle->getDBKey()
-		], __METHOD__ );
+		$row = $dbr->selectRow(
+			[
+				'a' => 'page_props',
+				'b' => 'page_props'
+			],
+			'a.pp_page AS page',
+			[
+				'a.pp_propname' => 'associatedImage',
+				'a.pp_value' => $imageTitle->getDBKey(),
+				'b.pp_value' => $index
+			],
+			__METHOD__,
+			[],
+			[
+				'b' => [ 'LEFT JOIN', [
+					'a.pp_page=b.pp_page',
+					'b.pp_propname' => 'associatedPageIndex'
+				] ]
+			]
+		);
 
-		// TODO: select only pages with valid $index
-
+		$articleId = $row->page;
 		if ( !$articleId ) {
 			return null;
 		}
