@@ -72,7 +72,7 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 		// (which typically contains the text from this image/PDF in wikitext form),
 		// then we display "Return to text" link to it.
 		// If such article doesn't exist, then we show direct link to Download the currently viewed file.
-		if ( $associatedArticleTitle->exists() ) {
+		if ( $associatedArticleTitle && $associatedArticleTitle->exists() ) {
 			$returnLink = $this->linkRenderer->makeKnownLink( $associatedArticleTitle,
 				wfMessage( 'prevnextimage-return-to-text' )->plain()
 			);
