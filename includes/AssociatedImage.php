@@ -47,13 +47,15 @@ class AssociatedImage {
 	 * Remember the parameter of {{#set_associated_index:}} in page_props table.
 	 * @param Parser $parser
 	 * @param string $parameter
+	 * @param string $htmlAnchor
 	 * @return string
 	 */
-	public static function pfSetAssociatedIndex( Parser $parser, $parameter ) {
+	public static function pfSetAssociatedIndex( Parser $parser, $parameter, $htmlAnchor = '' ) {
 		$index = intval( $parameter );
-		if ( $index > 1 ) {
-			$parser->getOutput()->setProperty( 'associatedPageIndex', $index );
+		if ( $index < 1 ) {
+			$index = 1;
 		}
+		$parser->getOutput()->setProperty( "associatedPageIndex.$index", $htmlAnchor );
 
 		// Return the text received as a parameter (for convenient use in templates).
 		return $parameter;
@@ -66,9 +68,10 @@ class AssociatedImage {
 	 * @return Title|null
 	 */
 	public static function findPageByImage( LinkTarget $imageTitle, $index ) {
+		$index = intval( $index );
 		if ( $index <= 1 ) {
 			// "File:Something.pdf?page=1" is the same thing as "File:Something.pdf".
-			$index = null;
+			$index = 1;
 		}
 
 		$dbr = wfGetDB( DB_REPLICA );
@@ -77,18 +80,20 @@ class AssociatedImage {
 				'a' => 'page_props',
 				'b' => 'page_props'
 			],
-			'a.pp_page AS page',
+			[
+				'a.pp_page AS page',
+				'b.pp_value AS anchor'
+			],
 			[
 				'a.pp_propname' => 'associatedImage',
-				'a.pp_value' => $imageTitle->getDBKey(),
-				'b.pp_value' => $index
+				'a.pp_value' => $imageTitle->getDBKey()
 			],
 			__METHOD__,
 			[],
 			[
 				'b' => [ 'LEFT JOIN', [
 					'a.pp_page=b.pp_page',
-					'b.pp_propname' => 'associatedPageIndex'
+					'b.pp_propname' => "associatedPageIndex.$index"
 				] ]
 			]
 		);
@@ -107,6 +112,11 @@ class AssociatedImage {
 			return null;
 		}
 
-		return Title::newFromID( $row->page );
+		$title = Title::newFromID( $row->page );
+		if ( $title && $row->anchor ) {
+			$title = $title->createFragmentTarget( $row->anchor );
+		}
+
+		return $title;
 	}
 }
