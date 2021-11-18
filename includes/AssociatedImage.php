@@ -69,7 +69,7 @@ class AssociatedImage {
 	 */
 	public static function findPageByImage( LinkTarget $imageTitle, $index ) {
 		$index = intval( $index );
-		if ( $index <= 1 ) {
+		if ( $index < 1 ) {
 			// "File:Something.pdf?page=1" is the same thing as "File:Something.pdf".
 			$index = 1;
 		}
