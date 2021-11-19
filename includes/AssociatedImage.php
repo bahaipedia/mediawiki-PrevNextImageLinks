@@ -91,7 +91,7 @@ class AssociatedImage {
 			__METHOD__,
 			[],
 			[
-				'b' => [ 'LEFT JOIN', [
+				'b' => [ 'INNER JOIN', [
 					'a.pp_page=b.pp_page',
 					'b.pp_propname' => "associatedPageIndex.$index"
 				] ]
