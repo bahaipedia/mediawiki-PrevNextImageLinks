@@ -125,5 +125,8 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 			[ AssociatedImage::class, 'pfSetAssociatedImage' ] );
 		$parser->setFunctionHook( 'set_associated_index',
 			[ AssociatedImage::class, 'pfSetAssociatedIndex' ] );
+
+		$parser->setFunctionHook( 'set_prev_next',
+			[ PageFinder::class, 'pfSetPrevNext' ] );
 	}
 }
