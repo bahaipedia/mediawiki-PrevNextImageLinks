@@ -45,14 +45,14 @@ class PageFinder {
 	}
 
 	/**
-	 * Return an array of prev/next titles (if filename ends with a number) or nulls (if it doesn't).
+	 * Return an array of possible prev/next titles (if filename ends with a number).
 	 * Doesn't check for existence of these files.
 	 * @return array
-	 * @phan-return array{0:Title|null,1:Title|null}
+	 * @phan-return array{0:Title[],1:Title[]}
 	 */
 	public function findPrevNext() {
-		$prevTitle = null;
-		$nextTitle = null;
+		$prevTitles = [];
+		$nextTitles = [];
 
 		// Check if Next/Prev links were explicitly set ({{#set_next_image:}}) on the page $this->title.
 		$dbr = wfGetDB( DB_REPLICA );
@@ -67,32 +67,66 @@ class PageFinder {
 		if ( $prevNextOverride ) {
 			[ $prevOverride, $nextOverride ] = explode( '|', $prevNextOverride );
 			if ( $prevOverride ) {
-				$prevTitle = Title::makeTitleSafe( NS_FILE, $prevOverride );
+				$prevTitles[] = Title::makeTitle( NS_FILE, $prevOverride );
 			}
 			if ( $nextOverride ) {
-				$nextTitle = Title::makeTitleSafe( NS_FILE, $nextOverride );
+				$nextTitles[] = Title::makeTitle( NS_FILE, $nextOverride );
 			}
 		}
 
-		if ( !$prevTitle || !$nextTitle ) {
-			// Try to find a number before extension, e.g. "123" in "Something 123.png".
-			$filename = $this->title->getText(); // E.g. "Something 123.png"
-			$matches = null;
-			if ( preg_match( '/([0-9]+)\.([^.]+$)/', $filename, $matches ) ) {
-				$baseFilename = substr( $filename, 0, -1 * strlen( $matches[0] ) ); // E.g. "Something ".
-				$number = intval( $matches[1] ); // E.g. 123
-				$extension = $matches[2]; // E.g. "png".
+		// Try to find a number before extension, e.g. "123" in "Something 123.png".
+		$filename = $this->title->getText(); // E.g. "Something 123.png"
+		$matches = null;
+		if ( preg_match( '/([0-9]+)\.([^.]+$)/', $filename, $matches ) ) {
+			$baseFilename = substr( $filename, 0, -1 * strlen( $matches[0] ) ); // E.g. "Something ".
+			$numberAsString = $matches[1];
+			$extension = $matches[2]; // E.g. "png".
 
-				if ( !$prevTitle ) {
-					$prevTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number - 1 ) . '.' . $extension );
-				}
-				if ( !$nextTitle ) {
-					$nextTitle = Title::makeTitle( NS_FILE, $baseFilename . ( $number + 1 ) . '.' . $extension );
-				}
+			foreach ( $this->changeNumberInTitle( $numberAsString, -1 ) as $possiblePrevNumber ) {
+				$prevTitles[] = Title::makeTitle( NS_FILE,
+					$baseFilename . $possiblePrevNumber . '.' . $extension );
+			}
+
+			foreach ( $this->changeNumberInTitle( $numberAsString, 1 ) as $possibleNextNumber ) {
+				$nextTitles[] = Title::makeTitle( NS_FILE,
+					$baseFilename . $possibleNextNumber . '.' . $extension );
 			}
 		}
 
-		return [ $prevTitle, $nextTitle ];
+		return [ $prevTitles, $nextTitles ];
+	}
+
+	/**
+	 * Given a number like "12" or "0012", add $diff (integer) to them
+	 * and return an array of possible numbers (both preserving or not preserving leading zeroes).
+	 *
+	 * @param string $oldNumberAsString Part of filename that contains the number, e.g. "005".
+	 * @param int $diff Change to the number, e.g. 1 or -1.
+	 * @return string[]
+	 */
+	protected function changeNumberInTitle( $oldNumberAsString, $diff ) {
+		$newNumber = intval( $oldNumberAsString ) + $diff;
+
+		$result = [];
+		$result[] = $newNumber;
+
+		$newNumberAsString = (string)$newNumber;
+		$oldLength = strlen( $oldNumberAsString );
+
+		$lengthDecrease = $oldLength - strlen( $newNumberAsString );
+		if ( $lengthDecrease > 0 ) {
+			// When calculating $newNumber, we lost at least one digit.
+			// We don't exactly know if we need a leading zero here: for example,
+			// if $oldNumberAsString=100 and $diff=-1, then it's unknown if expected result is 99 or 099,
+			// so we add both to $result.
+
+			$result[] = str_pad( $newNumberAsString, $oldLength, '0', STR_PAD_LEFT );
+		}
+
+		// Filter out numbers below 0.
+		return array_filter( $result, static function ( $value ) {
+			return $value >= 0;
+		} );
 	}
 
 	/**

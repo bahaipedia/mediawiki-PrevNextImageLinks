@@ -57,7 +57,7 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 			$title,
 			RequestContext::getMain()->getRequest()->getIntOrNull( 'page' )
 		);
-		list( $prevTitle, $nextTitle ) = $finder->findPrevNext();
+		list( $prevTitles, $nextTitles ) = $finder->findPrevNext();
 		$associatedArticleTitle = $finder->findAssociatedArticle();
 
 		$logger = \MediaWiki\Logger\LoggerFactory::getInstance( 'ImageLinks' );
@@ -79,11 +79,16 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 		}
 
 		// "Previous file" link. Not shown if the previous file doesn't exist.
-		if ( $prevTitle && $this->repoGroup->findFile( $prevTitle ) ) {
-			$prevLink = $this->linkRenderer->makeKnownLink( $prevTitle,
-				wfMessage( 'prevnextimage-previous-file' )->plain()
-			);
-			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-prev' ], $prevLink );
+		foreach ( $prevTitles as $prevTitle ) {
+			if ( $this->repoGroup->findFile( $prevTitle ) ) {
+				$prevLink = $this->linkRenderer->makeKnownLink( $prevTitle,
+					wfMessage( 'prevnextimage-previous-file' )->plain()
+				);
+				$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-prev' ], $prevLink );
+
+				// Found.
+				break;
+			}
 		}
 
 		// Between Prev/Next link: if there is an existing article associated with this image
@@ -107,11 +112,16 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 		}
 
 		// "Next file" link. Not shown if the next file doesn't exist.
-		if ( $nextTitle && $this->repoGroup->findFile( $nextTitle ) ) {
-			$nextLink = $this->linkRenderer->makeKnownLink( $nextTitle,
-				wfMessage( 'prevnextimage-next-file' )->plain()
-			);
-			$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-next' ], $nextLink );
+		foreach ( $nextTitles as $nextTitle ) {
+			if ( $this->repoGroup->findFile( $nextTitle ) ) {
+				$nextLink = $this->linkRenderer->makeKnownLink( $nextTitle,
+					wfMessage( 'prevnextimage-next-file' )->plain()
+				);
+				$toc[] = Html::rawElement( 'li', [ 'id' => 'prevnextlinks-next' ], $nextLink );
+
+				// Found.
+				break;
+			}
 		}
 	}
 
