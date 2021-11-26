@@ -22,12 +22,14 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
+use Html;
+use ImagePage;
 use Parser;
 use Title;
 
 class PageFinder {
-	/** @var Title */
-	protected $title;
+	/** @var ImagePage */
+	protected $page;
 
 	/**
 	 * @var int|null
@@ -36,11 +38,11 @@ class PageFinder {
 	protected $index;
 
 	/**
-	 * @param Title $title Name of the currently viewed file.
+	 * @param ImagePage $page Currently viewed file.
 	 * @param int|null $index
 	 */
-	public function __construct( Title $title, $index ) {
-		$this->title = $title;
+	public function __construct( ImagePage $page, $index ) {
+		$this->page = $page;
 		$this->index = $index;
 	}
 
@@ -54,28 +56,37 @@ class PageFinder {
 		$prevTitles = [];
 		$nextTitles = [];
 
-		// Check if Next/Prev links were explicitly set ({{#set_next_image:}}) on the page $this->title.
-		$dbr = wfGetDB( DB_REPLICA );
-		$prevNextOverride = $dbr->selectField( 'page_props', 'pp_value',
-			[
-				'pp_page' => $this->title->getArticleId(),
-				'pp_propname' => 'prevNextImage'
-			],
-			__METHOD__
-		);
+		// Check for {{#set_prev_next:}} override.
+		$lang = $this->page->getContext()->getLanguage();
+		$description = $this->page->getFile()->getDescriptionText( $lang );
 
-		if ( $prevNextOverride ) {
-			[ $prevOverride, $nextOverride ] = explode( '|', $prevNextOverride );
+		$matches = null;
+		if ( preg_match( '/data-prevnext="([^"]*)"/', $description, $matches ) ) {
+			$overrides = explode( '|', html_entity_decode( $matches[1] ) );
+			$prevOverride = $overrides[0];
+			$nextOverride = $overrides[1] ?? ''; // In case someone added "data-prevnext" manually.
+
 			if ( $prevOverride ) {
-				$prevTitles[] = Title::makeTitle( NS_FILE, $prevOverride );
+				$overrideTitle = Title::makeTitleSafe( NS_FILE, $prevOverride );
+				if ( $overrideTitle ) {
+					$prevTitles[] = $overrideTitle;
+				}
 			}
 			if ( $nextOverride ) {
-				$nextTitles[] = Title::makeTitle( NS_FILE, $nextOverride );
+				$overrideTitle = Title::makeTitleSafe( NS_FILE, $nextOverride );
+				if ( $overrideTitle ) {
+					$nextTitles[] = $overrideTitle;
+				}
+			}
+
+			if ( $prevTitles && $nextTitles ) {
+				// Both explicitly set.
+				return [ $prevTitles, $nextTitles ];
 			}
 		}
 
 		// Try to find a number before extension, e.g. "123" in "Something 123.png".
-		$filename = $this->title->getText(); // E.g. "Something 123.png"
+		$filename = $this->page->getTitle()->getText(); // E.g. "Something 123.png"
 		$matches = null;
 		if ( preg_match( '/([0-9]+)\.([^.]+$)/', $filename, $matches ) ) {
 			$baseFilename = substr( $filename, 0, -1 * strlen( $matches[0] ) ); // E.g. "Something ".
@@ -106,6 +117,9 @@ class PageFinder {
 	 */
 	protected function changeNumberInTitle( $oldNumberAsString, $diff ) {
 		$newNumber = intval( $oldNumberAsString ) + $diff;
+		if ( $newNumber < 0 ) {
+			return [];
+		}
 
 		$result = [];
 		$result[] = $newNumber;
@@ -123,10 +137,7 @@ class PageFinder {
 			$result[] = str_pad( $newNumberAsString, $oldLength, '0', STR_PAD_LEFT );
 		}
 
-		// Filter out numbers below 0.
-		return array_filter( $result, static function ( $value ) {
-			return $value >= 0;
-		} );
+		return $result;
 	}
 
 	/**
@@ -138,21 +149,25 @@ class PageFinder {
 	public function findAssociatedArticle() {
 		// It's possible that some article has {{#set_associated_image:}},
 		// in which case we can easily detect it.
-		return AssociatedImage::findPageByImage( $this->title, $this->index );
+		return AssociatedImage::findPageByImage( $this->page->getTitle(), $this->index );
 	}
 
 	/**
 	 * Remember the parameter of {{#set_prev_next:}} in page_props table.
-	 * @param Parser $parser
+	 * @param Parser $parser @phan-unused-param
 	 * @param string $prev
 	 * @param string $next
+	 * @return string
 	 */
 	public static function pfSetPrevNext( Parser $parser, $prev, $next = '' ) {
 		$prev = trim( strtr( $prev, ' ', '_' ) );
 		$next = trim( strtr( $next, ' ', '_' ) );
 
 		if ( $prev || $next ) {
-			$parser->getOutput()->setProperty( 'prevNextImage', $prev . '|' . $next );
+			// Invisible tag that will be parsed in ImagePageShowTOC hook.
+			return Html::rawElement( 'span', [ 'data-prevnext' => $prev . '|' . $next ] );
 		}
+
+		return '';
 	}
 }
