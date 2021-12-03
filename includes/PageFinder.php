@@ -62,7 +62,7 @@ class PageFinder {
 
 		$matches = null;
 		if ( preg_match( '/data-prevnext="([^"]*)"/', $description, $matches ) ) {
-			$overrides = explode( '|', html_entity_decode( $matches[1] ) );
+			$overrides = explode( '|', html_entity_decode( $matches[1], ENT_QUOTES ) );
 			$prevOverride = $overrides[0];
 			$nextOverride = $overrides[1] ?? ''; // In case someone added "data-prevnext" manually.
 
