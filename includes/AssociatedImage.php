@@ -103,7 +103,7 @@ class AssociatedImage {
 			'with {associatedPageIndex}={index}: {isFound}',
 			[
 				'image' => $imageTitle->getDBKey(),
-				'index' => $index === null ? '(null)' : $index,
+				'index' => $index,
 				'isFound' => $row ? ( 'Found: pageID=' . $row->page ) : 'Not found'
 			]
 		);

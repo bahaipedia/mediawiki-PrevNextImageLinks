@@ -57,7 +57,7 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 			$page,
 			RequestContext::getMain()->getRequest()->getIntOrNull( 'page' )
 		);
-		list( $prevTitles, $nextTitles ) = $finder->findPrevNext();
+		[ $prevTitles, $nextTitles ] = $finder->findPrevNext();
 		$associatedArticleTitle = $finder->findAssociatedArticle();
 
 		$logger = \MediaWiki\Logger\LoggerFactory::getInstance( 'ImageLinks' );
