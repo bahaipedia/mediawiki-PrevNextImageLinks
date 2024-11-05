@@ -85,11 +85,13 @@ class NavigationTemplate {
 
 		foreach ( $anchorsFound as &$anchors ) {
 			// Sort by anchor number.
+			// TODO: support roman numerals as anchor numbers.
 			sort( $anchors );
 		}
 
 		// Sort subpages in the order of their anchor numbers.
 		uasort( $anchorsFound, static function ( $numbers1, $numbers2 ) {
+			// TODO: support roman numerals as anchor numbers.
 			return $numbers1[0] - $numbers2[0];
 		} );
 
