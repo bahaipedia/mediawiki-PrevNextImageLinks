@@ -36,7 +36,7 @@ class AssociatedImage {
 	public static function pfSetAssociatedImage( Parser $parser, $parameter ) {
 		$parameter = trim( strtr( $parameter, ' ', '_' ) );
 		if ( $parameter ) {
-			$parser->getOutput()->setProperty( 'associatedImage', $parameter );
+			$parser->getOutput()->setPageProperty( 'associatedImage', $parameter );
 		}
 
 		// Return the text received as a parameter (for convenient use in templates).
@@ -55,7 +55,7 @@ class AssociatedImage {
 		if ( $index < 1 ) {
 			$index = 1;
 		}
-		$parser->getOutput()->setProperty( "associatedPageIndex.$index", $htmlAnchor );
+		$parser->getOutput()->setPageProperty( "associatedPageIndex.$index", $htmlAnchor );
 
 		// Return the text received as a parameter (for convenient use in templates).
 		return $parameter;
