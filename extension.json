@@ -17,6 +17,7 @@
 	"AutoloadClasses": {
 		"MediaWiki\\PrevNextImageLinks\\AssociatedImage": "includes/AssociatedImage.php",
 		"MediaWiki\\PrevNextImageLinks\\Hooks": "includes/Hooks.php",
+		"MediaWiki\\PrevNextImageLinks\\NavigationTemplate": "includes/NavigationTemplate.php",
 		"MediaWiki\\PrevNextImageLinks\\PageFinder": "includes/PageFinder.php"
 	},
 	"ExtensionMessagesFiles": {

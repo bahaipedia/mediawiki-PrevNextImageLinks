@@ -138,5 +138,8 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 
 		$parser->setFunctionHook( 'set_prev_next',
 			[ PageFinder::class, 'pfSetPrevNext' ] );
+
+		$parser->setFunctionHook( 'subpage_anchor_navigation',
+			[ NavigationTemplate::class, 'pfSubpageAnchorNavigation' ] );
 	}
 }
