@@ -88,7 +88,15 @@ class NavigationTemplate {
 		}
 
 		uasort( $anchorsFound, static function ( $a, $b ) {
-			return $a['number'] - $b['number'];
+			// Sort by number.
+			$cmp = $a['number'] - $b['number'];
+			if ( $cmp !== 0 ) {
+				return $cmp;
+			}
+
+			// If numbers are the same (likely non-numeric anchors?),
+			// then sort by displayed text.
+			return strcmp( $a['text'], $b['text'] );
 		} );
 
 		// Generate navigation links.
@@ -116,8 +124,13 @@ class NavigationTemplate {
 			return (int)$matches[0];
 		}
 
-		// Roman numeral?
-		// TODO
+		$value = RomanNumeral::romanToInteger( $anchor );
+		if ( $value ) {
+			// Found and successfully parsed roman numeral.
+			return $value;
+		}
+
+		// Default (no number found). These anchors can still be shown.
 		return 0;
 	}
 }
