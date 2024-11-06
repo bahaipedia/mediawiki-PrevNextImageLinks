@@ -64,7 +64,8 @@ class NavigationTemplate {
 			->join( 'page_props', null, [ 'pp_page = page_id' ] )
 			->where( [
 				'page_namespace' => $ns,
-				'page_title ' . $dbr->buildLike( $title->getDBKey(), '/', $dbr->anyString() )
+				'page_title ' . $dbr->buildLike( $title->getDBKey(), '/', $dbr->anyString() ),
+				'pp_propname ' . $dbr->buildLike( 'associatedPageIndex.', $dbr->anyString() )
 			] )
 			->caller( __METHOD__ )
 			->fetchResultSet();
