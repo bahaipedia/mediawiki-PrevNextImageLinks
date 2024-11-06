@@ -74,34 +74,28 @@ class NavigationTemplate {
 			return '';
 		}
 
-		$anchorsFound = []; // [ 'subpageName1' => [ anchorNumber1, anchorNumber2, ... ], ... ]
+		// Gather and sort all anchors.
+		$anchorsFound = [];
 		foreach ( $res as $row ) {
-			if ( !isset( $anchorsFound[$row->title] ) ) {
-				$anchorsFound[$row->title] = [];
-			}
-
-			$anchorsFound[$row->title][] = preg_replace( '/^pg/', '', $row->anchor );
+			// Strip common prefixes ("pg" and "pg-").
+			$shownAnchor = preg_replace( '/^pg-?/', '', $row->anchor );
+			$anchorsFound[] = [
+				'title' => $row->title,
+				'anchor' => $row->anchor,
+				'text' => $shownAnchor,
+				'number' => $this->parseAnchorNumber( $row->anchor )
+			];
 		}
 
-		foreach ( $anchorsFound as &$anchors ) {
-			// Sort by anchor number.
-			// TODO: support roman numerals as anchor numbers.
-			sort( $anchors );
-		}
-
-		// Sort subpages in the order of their anchor numbers.
-		uasort( $anchorsFound, static function ( $numbers1, $numbers2 ) {
-			// TODO: support roman numerals as anchor numbers.
-			return $numbers1[0] - $numbers2[0];
+		uasort( $anchorsFound, static function ( $a, $b ) {
+			return $a['number'] - $b['number'];
 		} );
 
 		// Generate navigation links.
 		$links = [];
-		foreach ( $anchorsFound as $subpageName => $anchorNumbers ) {
-			foreach ( $anchorNumbers as $anchor ) {
-				$anchorTitle = Title::makeTitle( $ns, $subpageName, "pg$anchor" );
-				$links[] = Linker::link( $anchorTitle, $anchor );
-			}
+		foreach ( $anchorsFound as $info ) {
+			$anchorTitle = Title::makeTitle( $ns, $info['title'], $info['anchor'] );
+			$links[] = Linker::link( $anchorTitle, $info['text'] );
 		}
 
 		$resultHtml = Xml::tags( 'div',
@@ -109,5 +103,21 @@ class NavigationTemplate {
 			implode( ' ', $links )
 		);
 		return [ $resultHtml, 'isHTML' => true ];
+	}
+
+	/**
+	 * Detect the number inside the string $anchor, e.g. "15" in "pg15" or "9" in "pg-ix".
+	 * @param string $anchor
+	 * @return int
+	 */
+	protected function parseAnchorNumber( $anchor ) {
+		// Decimal number?
+		if ( preg_match( '/[0-9]+/', $anchor, $matches ) ) {
+			return (int)$matches[0];
+		}
+
+		// Roman numeral?
+		// TODO
+		return 0;
 	}
 }
