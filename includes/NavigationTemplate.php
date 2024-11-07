@@ -49,7 +49,8 @@ class NavigationTemplate {
 
 	/**
 	 * Find all subpages of $title, find all tags like <span id="pg123"> inside each subpage,
-	 * then generate links to every #pg<number> anchor, sorted by number after "pg".
+	 * then generate links to every #pg<number> anchor,
+	 * sorted by first parameter of {{#set_associated_index:}} that is associated with this anchor.
 	 * @param PageIdentity $title
 	 * @return string|array
 	 */
@@ -59,7 +60,11 @@ class NavigationTemplate {
 
 		// Find all subpages of $title.
 		$res = $dbr->newSelectQueryBuilder()
-			->select( [ 'page_title AS title', 'pp_value AS anchor' ] )
+			->select( [
+				'page_title AS title',
+				'pp_value AS anchor',
+				'pp_propname AS sortkey'
+			] )
 			->from( 'page' )
 			->join( 'page_props', null, [ 'pp_page = page_id' ] )
 			->where( [
@@ -80,29 +85,29 @@ class NavigationTemplate {
 		foreach ( $res as $row ) {
 			// Strip standard prefix ("pg").
 			$shownAnchor = preg_replace( '/^pg/', '', $row->anchor );
-			$number = $this->parseAnchorNumber( $row->anchor );
-			if ( $number < 0 ) {
-				// Negative numbers (e.g. "pg-5") are NOT shown in the navigation template.
+			if ( !$shownAnchor || $shownAnchor[0] === '-' ) {
+				// Empty anchors and anchors with negative numbers (e.g. "pg-5")
+				// are NOT shown in the navigation template.
 				continue;
 			}
+
+			$sortkey = intval( preg_replace( '/^associatedPageIndex\./', '', $row->sortkey ) );
 
 			$anchorsFound[] = [
 				'title' => $row->title,
 				'anchor' => $row->anchor,
 				'text' => $shownAnchor,
-				'number' => $number
+				'sortkey' => $sortkey
 			];
 		}
 
 		uasort( $anchorsFound, static function ( $a, $b ) {
-			// Sort by number.
-			$cmp = $a['number'] - $b['number'];
+			$cmp = $a['sortkey'] - $b['sortkey'];
 			if ( $cmp !== 0 ) {
 				return $cmp;
 			}
 
-			// If numbers are the same (likely non-numeric anchors?),
-			// then sort by displayed text.
+			// If sortkeys are the same, then sort by displayed text.
 			return strcmp( $a['text'], $b['text'] );
 		} );
 
@@ -118,26 +123,5 @@ class NavigationTemplate {
 			implode( ' ', $links )
 		);
 		return [ $resultHtml, 'isHTML' => true ];
-	}
-
-	/**
-	 * Detect the number inside the string $anchor, e.g. "15" in "pg15" or "9" in "pg-ix".
-	 * @param string $anchor
-	 * @return int
-	 */
-	protected function parseAnchorNumber( $anchor ) {
-		// Decimal number?
-		if ( preg_match( '/\-?[0-9]+/', $anchor, $matches ) ) {
-			return (int)$matches[0];
-		}
-
-		$value = RomanNumeral::romanToInteger( $anchor );
-		if ( $value ) {
-			// Found and successfully parsed roman numeral.
-			return $value;
-		}
-
-		// Default (no number found). These anchors can still be shown.
-		return 0;
 	}
 }
