@@ -78,13 +78,19 @@ class NavigationTemplate {
 		// Gather and sort all anchors.
 		$anchorsFound = [];
 		foreach ( $res as $row ) {
-			// Strip common prefixes ("pg" and "pg-").
-			$shownAnchor = preg_replace( '/^pg-?/', '', $row->anchor );
+			// Strip standard prefix ("pg").
+			$shownAnchor = preg_replace( '/^pg/', '', $row->anchor );
+			$number = $this->parseAnchorNumber( $row->anchor );
+			if ( $number < 0 ) {
+				// Negative numbers (e.g. "pg-5") are NOT shown in the navigation template.
+				continue;
+			}
+
 			$anchorsFound[] = [
 				'title' => $row->title,
 				'anchor' => $row->anchor,
 				'text' => $shownAnchor,
-				'number' => $this->parseAnchorNumber( $row->anchor )
+				'number' => $number
 			];
 		}
 
@@ -121,7 +127,7 @@ class NavigationTemplate {
 	 */
 	protected function parseAnchorNumber( $anchor ) {
 		// Decimal number?
-		if ( preg_match( '/[0-9]+/', $anchor, $matches ) ) {
+		if ( preg_match( '/\-?[0-9]+/', $anchor, $matches ) ) {
 			return (int)$matches[0];
 		}
 
