@@ -23,7 +23,6 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
-use Linker;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Page\PageIdentity;
 use Parser;
@@ -55,7 +54,9 @@ class NavigationTemplate {
 	 * @return string|array
 	 */
 	protected function generate( PageIdentity $title ) {
-		$dbr = MediaWikiServices::getInstance()->getDBLoadBalancer()->getConnection( DB_REPLICA );
+		$services = MediaWikiServices::getInstance();
+		$dbr = $services->getDBLoadBalancer()->getConnection( DB_REPLICA );
+
 		$ns = $title->getNamespace();
 
 		// Find all subpages of $title.
@@ -112,10 +113,11 @@ class NavigationTemplate {
 		} );
 
 		// Generate navigation links.
+		$linkRenderer = $services->getLinkRenderer();
 		$links = [];
 		foreach ( $anchorsFound as $info ) {
 			$anchorTitle = Title::makeTitle( $ns, $info['title'], $info['anchor'] );
-			$links[] = Linker::link( $anchorTitle, $info['text'] );
+			$links[] = $linkRenderer->makeKnownLink( $anchorTitle, $info['text'] );
 		}
 
 		$resultHtml = Xml::tags( 'div',
