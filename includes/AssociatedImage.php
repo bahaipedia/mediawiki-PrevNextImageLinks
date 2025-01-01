@@ -2,7 +2,7 @@
 
 /*
 	Extension:PrevNextImageLinks - MediaWiki extension.
-	Copyright (C) 2021 Edward Chernenko.
+	Copyright (C) 2021-2025 Edward Chernenko.
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 namespace MediaWiki\PrevNextImageLinks;
 
 use MediaWiki\Linker\LinkTarget;
+use MediaWiki\MediaWikiServices;
 use Parser;
 use Title;
 
@@ -74,7 +75,7 @@ class AssociatedImage {
 			$index = 1;
 		}
 
-		$dbr = wfGetDB( DB_REPLICA );
+		$dbr = MediaWikiServices::getInstance()->getConnectionProvider()->getReplicaDatabase();
 		$row = $dbr->selectRow(
 			[
 				'a' => 'page_props',
