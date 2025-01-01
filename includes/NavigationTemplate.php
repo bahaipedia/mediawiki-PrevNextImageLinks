@@ -24,7 +24,7 @@
 namespace MediaWiki\PrevNextImageLinks;
 
 use MediaWiki\MediaWikiServices;
-use MediaWiki\Page\PageIdentity;
+use MediaWiki\Page\PageReference;
 use Parser;
 use Title;
 use Xml;
@@ -39,7 +39,10 @@ class NavigationTemplate {
 	public static function pfSubpageAnchorNavigation( Parser $parser, $pageName ) {
 		$title = $pageName ? Title::newFromText( $pageName ) : null;
 		if ( !$title ) {
-			$title = $parser->getTitle();
+			$title = $parser->getPage();
+			if ( !$title ) {
+				return '';
+			}
 		}
 
 		$template = new self;
@@ -50,10 +53,10 @@ class NavigationTemplate {
 	 * Find all subpages of $title, find all tags like <span id="pg123"> inside each subpage,
 	 * then generate links to every #pg<number> anchor,
 	 * sorted by first parameter of {{#set_associated_index:}} that is associated with this anchor.
-	 * @param PageIdentity $title
+	 * @param PageReference $title
 	 * @return string|array
 	 */
-	protected function generate( PageIdentity $title ) {
+	protected function generate( PageReference $title ) {
 		$services = MediaWikiServices::getInstance();
 		$dbr = $services->getDBLoadBalancer()->getConnection( DB_REPLICA );
 
