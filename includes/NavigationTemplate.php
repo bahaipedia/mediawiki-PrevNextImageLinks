@@ -58,7 +58,7 @@ class NavigationTemplate {
 	 */
 	protected function generate( PageReference $title ) {
 		$services = MediaWikiServices::getInstance();
-		$dbr = $services->getDBLoadBalancer()->getConnection( DB_REPLICA );
+		$dbr = $services->getConnectionProvider()->getReplicaDatabase();
 
 		$ns = $title->getNamespace();
 
