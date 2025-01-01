@@ -1,13 +1,13 @@
 {
 	"name": "PrevNextImageLinks",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"author": "Edward Chernenko",
 	"descriptionmsg": "prevnextimage-desc",
 	"url": "",
 	"license-name": "GPL-2.0+",
 	"type": "media",
 	"requires": {
-		"MediaWiki": ">= 1.35.0"
+		"MediaWiki": ">= 1.43.0"
 	},
 	"MessagesDirs": {
 		"PrevNextImageLinks": [
