@@ -23,7 +23,7 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
-use MediaWiki\Html\Xml;
+use Xml;
 use MediaWiki\Linker\LinkRenderer;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Page\PageReference;
