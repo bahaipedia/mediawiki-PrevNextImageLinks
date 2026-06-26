@@ -24,6 +24,7 @@ namespace MediaWiki\PrevNextImageLinks;
 
 use ImagePage;
 use MediaWiki\Html\Html;
+use MediaWiki\Title\Title;
 use MediaWiki\Title\TitleFactory;
 use Parser;
 
