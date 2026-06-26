@@ -1,5 +1,4 @@
 <?php
-
 /*
 	Extension:PrevNextImageLinks - MediaWiki extension.
 	Copyright (C) 2021-2025 Edward Chernenko.
