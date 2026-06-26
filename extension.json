@@ -28,7 +28,8 @@
 			"class": "MediaWiki\\PrevNextImageLinks\\Hooks",
 			"services": [
 				"LinkRenderer",
-				"RepoGroup"
+				"RepoGroup",
+				"TitleFactory"
 			]
 		}
 	},
