@@ -23,13 +23,13 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
-use Xml;
 use MediaWiki\Linker\LinkRenderer;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Page\PageReference;
 use MediaWiki\Parser\Parser;
 use MediaWiki\Title\TitleFactory;
 use Wikimedia\Rdbms\IConnectionProvider;
+use Xml;
 
 class NavigationTemplate {
 	private TitleFactory $titleFactory;
@@ -52,7 +52,7 @@ class NavigationTemplate {
 	 * @param ?string $pageName
 	 * @return array|string
 	 */
-	public static function pfSubpageAnchorNavigation( Parser $parser, $pageName = null ) {
+	public static function pfSubpageAnchorNavigation( Parser $parser, ?string $pageName = null ) {
 		$services = MediaWikiServices::getInstance();
 		$titleFactory = $services->getTitleFactory();
 
