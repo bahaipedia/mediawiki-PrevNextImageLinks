@@ -24,8 +24,8 @@ namespace MediaWiki\PrevNextImageLinks;
 
 use MediaWiki\Linker\LinkTarget;
 use MediaWiki\MediaWikiServices;
-use Parser;
-use Title;
+use MediaWiki\Parser\Parser;
+use MediaWiki\Title\Title;
 
 class AssociatedImage {
 	/**
@@ -75,7 +75,8 @@ class AssociatedImage {
 			$index = 1;
 		}
 
-		$dbr = MediaWikiServices::getInstance()->getConnectionProvider()->getReplicaDatabase();
+		$services = MediaWikiServices::getInstance();
+		$dbr = $services->getConnectionProvider()->getReplicaDatabase();
 		$row = $dbr->selectRow(
 			[
 				'a' => 'page_props',
@@ -113,7 +114,8 @@ class AssociatedImage {
 			return null;
 		}
 
-		$title = Title::newFromID( $row->page );
+		$titleFactory = $services->getTitleFactory();
+		$title = $titleFactory->newFromID( $row->page );
 		if ( $title && $row->anchor ) {
 			$title = $title->createFragmentTarget( $row->anchor );
 		}
