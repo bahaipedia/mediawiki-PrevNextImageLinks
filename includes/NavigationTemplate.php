@@ -23,21 +23,40 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
+use MediaWiki\Html\Xml;
+use MediaWiki\Linker\LinkRenderer;
 use MediaWiki\MediaWikiServices;
 use MediaWiki\Page\PageReference;
-use Parser;
-use Title;
-use Xml;
+use MediaWiki\Parser\Parser;
+use MediaWiki\Title\TitleFactory;
+use Wikimedia\Rdbms\IConnectionProvider;
 
 class NavigationTemplate {
+	private TitleFactory $titleFactory;
+	private IConnectionProvider $connectionProvider;
+	private LinkRenderer $linkRenderer;
+
+	public function __construct(
+		TitleFactory $titleFactory,
+		IConnectionProvider $connectionProvider,
+		LinkRenderer $linkRenderer
+	) {
+		$this->titleFactory = $titleFactory;
+		$this->connectionProvider = $connectionProvider;
+		$this->linkRenderer = $linkRenderer;
+	}
+
 	/**
 	 * Converts {{#subpage_anchor_navigation:}} wikitext into HTML output.
 	 * @param Parser $parser
 	 * @param ?string $pageName
 	 * @return array|string
 	 */
-	public static function pfSubpageAnchorNavigation( Parser $parser, $pageName ) {
-		$title = $pageName ? Title::newFromText( $pageName ) : null;
+	public static function pfSubpageAnchorNavigation( Parser $parser, $pageName = null ) {
+		$services = MediaWikiServices::getInstance();
+		$titleFactory = $services->getTitleFactory();
+
+		$title = $pageName ? $titleFactory->newFromText( $pageName ) : null;
 		if ( !$title ) {
 			$title = $parser->getPage();
 			if ( !$title ) {
@@ -45,7 +64,11 @@ class NavigationTemplate {
 			}
 		}
 
-		$template = new self;
+		$template = new self(
+			$titleFactory,
+			$services->getConnectionProvider(),
+			$services->getLinkRenderer()
+		);
 		return $template->generate( $title );
 	}
 
@@ -57,8 +80,7 @@ class NavigationTemplate {
 	 * @return string|array
 	 */
 	protected function generate( PageReference $title ) {
-		$services = MediaWikiServices::getInstance();
-		$dbr = $services->getConnectionProvider()->getReplicaDatabase();
+		$dbr = $this->connectionProvider->getReplicaDatabase();
 
 		$ns = $title->getNamespace();
 
@@ -116,11 +138,10 @@ class NavigationTemplate {
 		} );
 
 		// Generate navigation links.
-		$linkRenderer = $services->getLinkRenderer();
 		$links = [];
 		foreach ( $anchorsFound as $info ) {
-			$anchorTitle = Title::makeTitle( $ns, $info['title'], $info['anchor'] );
-			$links[] = $linkRenderer->makeKnownLink( $anchorTitle, $info['text'] );
+			$anchorTitle = $this->titleFactory->makeTitle( $ns, $info['title'], $info['anchor'] );
+			$links[] = $this->linkRenderer->makeKnownLink( $anchorTitle, $info['text'] );
 		}
 
 		$resultHtml = Xml::tags( 'div',
