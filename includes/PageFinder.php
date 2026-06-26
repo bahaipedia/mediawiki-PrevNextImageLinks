@@ -22,10 +22,10 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
-use Html;
 use ImagePage;
+use MediaWiki\Html\Html;
+use MediaWiki\Title\TitleFactory;
 use Parser;
-use Title;
 
 class PageFinder {
 	/** @var ImagePage */
@@ -37,13 +37,18 @@ class PageFinder {
 	 */
 	protected $index;
 
+	/** @var TitleFactory */
+	protected $titleFactory;
+
 	/**
 	 * @param ImagePage $page Currently viewed file.
 	 * @param int|null $index
+	 * @param TitleFactory $titleFactory
 	 */
-	public function __construct( ImagePage $page, $index ) {
+	public function __construct( ImagePage $page, $index, TitleFactory $titleFactory ) {
 		$this->page = $page;
 		$this->index = $index;
+		$this->titleFactory = $titleFactory;
 	}
 
 	/**
@@ -61,19 +66,19 @@ class PageFinder {
 		$description = $this->page->getFile()->getDescriptionText( $lang );
 
 		$matches = null;
-		if ( preg_match( '/data-prevnext="([^"]*)"/', $description, $matches ) ) {
+		if ( preg_match( '/data-prevnext="([^"]*)"/', $description ?? '', $matches ) ) {
 			$overrides = explode( '|', html_entity_decode( $matches[1], ENT_QUOTES ) );
 			$prevOverride = $overrides[0];
 			$nextOverride = $overrides[1] ?? ''; // In case someone added "data-prevnext" manually.
 
 			if ( $prevOverride ) {
-				$overrideTitle = Title::makeTitleSafe( NS_FILE, $prevOverride );
+				$overrideTitle = $this->titleFactory->makeTitleSafe( NS_FILE, $prevOverride );
 				if ( $overrideTitle ) {
 					$prevTitles[] = $overrideTitle;
 				}
 			}
 			if ( $nextOverride ) {
-				$overrideTitle = Title::makeTitleSafe( NS_FILE, $nextOverride );
+				$overrideTitle = $this->titleFactory->makeTitleSafe( NS_FILE, $nextOverride );
 				if ( $overrideTitle ) {
 					$nextTitles[] = $overrideTitle;
 				}
@@ -94,12 +99,12 @@ class PageFinder {
 			$extension = $matches[2]; // E.g. "png".
 
 			foreach ( $this->changeNumberInTitle( $numberAsString, -1 ) as $possiblePrevNumber ) {
-				$prevTitles[] = Title::makeTitle( NS_FILE,
+				$prevTitles[] = $this->titleFactory->makeTitle( NS_FILE,
 					$baseFilename . $possiblePrevNumber . '.' . $extension );
 			}
 
 			foreach ( $this->changeNumberInTitle( $numberAsString, 1 ) as $possibleNextNumber ) {
-				$nextTitles[] = Title::makeTitle( NS_FILE,
+				$nextTitles[] = $this->titleFactory->makeTitle( NS_FILE,
 					$baseFilename . $possibleNextNumber . '.' . $extension );
 			}
 		}
@@ -144,7 +149,7 @@ class PageFinder {
 	 * Find title of the article (if any) that (according to several naming conventions)
 	 * would contain the formatted wikitext related/equal to what is shown on this image/PDF.
 	 * For example, "Something_Vol5_Issue2.pdf" -> "Something/Volume_5/Issue_2/Text".
-	 * @return Title|null
+	 * @return \Title|null
 	 */
 	public function findAssociatedArticle() {
 		// It's possible that some article has {{#set_associated_image:}},
