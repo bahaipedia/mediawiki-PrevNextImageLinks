@@ -22,12 +22,13 @@
 
 namespace MediaWiki\PrevNextImageLinks;
 
-use Html;
+use MediaWiki\Context\RequestContext;
 use MediaWiki\Hook\ParserFirstCallInitHook;
+use MediaWiki\Html\Html;
 use MediaWiki\Linker\LinkRenderer;
 use MediaWiki\Page\Hook\ImagePageShowTOCHook;
+use MediaWiki\Title\TitleFactory;
 use RepoGroup;
-use RequestContext;
 
 class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 	/** @var LinkRenderer */
@@ -36,13 +37,18 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 	/** @var RepoGroup */
 	protected $repoGroup;
 
+	/** @var TitleFactory */
+	protected $titleFactory;
+
 	/**
 	 * @param LinkRenderer $linkRenderer
 	 * @param RepoGroup $repoGroup
+	 * @param TitleFactory $titleFactory
 	 */
-	public function __construct( LinkRenderer $linkRenderer, RepoGroup $repoGroup ) {
+	public function __construct( LinkRenderer $linkRenderer, RepoGroup $repoGroup, TitleFactory $titleFactory ) {
 		$this->linkRenderer = $linkRenderer;
 		$this->repoGroup = $repoGroup;
+		$this->titleFactory = $titleFactory;
 	}
 
 	/**
@@ -55,7 +61,8 @@ class Hooks implements ImagePageShowTOCHook, ParserFirstCallInitHook {
 
 		$finder = new PageFinder(
 			$page,
-			RequestContext::getMain()->getRequest()->getIntOrNull( 'page' )
+			RequestContext::getMain()->getRequest()->getIntOrNull( 'page' ),
+			$this->titleFactory
 		);
 		[ $prevTitles, $nextTitles ] = $finder->findPrevNext();
 		$associatedArticleTitle = $finder->findAssociatedArticle();
